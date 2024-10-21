@@ -1,7 +1,7 @@
 import ross as rs
 import numpy as np
 import plotly.graph_objects as go
-import other_fct as fct
+import complete_ross as fct
 
 
 material_exo = rs.Material(name="mat_exo", rho=7850, E=2.05 * 10**11, Poisson=0.3)
