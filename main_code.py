@@ -30,7 +30,6 @@ rotor_lp = rs.Rotor(
     bearing_elements=low_pressure_seal_elements,
     disk_elements=low_pressure_elements,
 )
-
 hight_pressure_elements = []
 hight_pressure_seal_elements = []
 hight_pressure_disk_elements = []
@@ -74,7 +73,7 @@ bearings = [
 shaft = [axial_shaft, coaxial_shaft]
 rotor_coaxial = rs.CoAxialRotor(shaft, disks, bearings)
 rotor_coaxial.plot_rotor()
-
+# campbell = rotor_lp.run_campbell(speed_range, frequency_type="wn", frequencies=7)
 G_lp = rotor_lp.G()
 # print("Gyrioscopique Low pressure \t",G_lp.shape)
 G_hp = rotor_hp.G() * 1.5
@@ -95,7 +94,8 @@ speed_range = np.linspace(0, max_spin, samples)
 # print("wd = ",run_critical_speed["wd"])
 # print("wn = ",run_critical_speed["wn"])
 
-# fct.run_cambell_2_rotor(rotor_lp, rotor_hp, speed_range, frequencies=3, frequency_type="wn")
-fct.run_campbell(rotor_lp, speed_range, frequencies = 10)
+# fct.run_cambell_2_rotor(rotor_lp, rotor_hp, speed_range, frequencies=3, frequency_type="wn", Gyro=G)
+fct.run_campbell(rotor_lp, speed_range, frequencies = 7, frequency_type="wn")
 # print("G_hp", G_hp.shape)
 # fct.run_campbell(rotor_hp, speed_range, frequencies = 7, Gyro=rotor_hp.G() * 1.5)
+# fct.run_damping_mode(rotor_lp, rotor_hp, speed_range, frequencies=8, frequency_type="wn",Gyro=rotor_hp.G())
