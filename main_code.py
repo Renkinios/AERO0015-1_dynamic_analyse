@@ -38,7 +38,7 @@ for i in range(4) :
     hight_pressure_elements.append(rs.ShaftElement(L = 0.1, material=material_exo, n=i, idl=0.07, odl=0.08))
 
 hight_pressure_disk_elements.append(
-    rs.DiskElement.from_geometry(n=2, material=material_exo, width=0.015, i_d=0.08, o_d=0.038)
+    rs.DiskElement.from_geometry(n=2, material=material_exo, width=0.015, i_d=0.08, o_d=0.46)
 )
 
 hight_pressure_seal_elements.append(rs.BearingElement(n=0, kxx=2.5e7, kyy=2.5e7, cxx=0, cyy=0))
@@ -59,7 +59,7 @@ coaxial_shaft = [rs.ShaftElement(0.1, 0.07, 0.08, material=material_exo) for _ i
 disks = [
     rs.DiskElement.from_geometry(n=1, material=material_exo, width=0.02, i_d=0.05, o_d=0.257),
     rs.DiskElement.from_geometry(n=7, material=material_exo, width=0.02, i_d=0.05, o_d=0.3),
-    rs.DiskElement.from_geometry(n=11, material=material_exo, width=0.015, i_d=0.08, o_d=0.038)
+    rs.DiskElement.from_geometry(n=11, material=material_exo, width=0.015, i_d=0.08, o_d=0.46)
 ]
 
 bearings = [
@@ -94,8 +94,8 @@ speed_range = np.linspace(0, max_spin, samples)
 # print("wd = ",run_critical_speed["wd"])
 # print("wn = ",run_critical_speed["wn"])
 
-# fct.run_cambell_2_rotor(rotor_lp, rotor_hp, speed_range, frequencies=3, frequency_type="wn", Gyro=G)
-fct.run_campbell(rotor_lp, speed_range, frequencies = 7, frequency_type="wn")
+fct.run_cambell_2_rotor(rotor_lp, rotor_hp, speed_range, frequencies=6, frequency_type="wn", Gyro=G_hp)
+# fct.run_campbell(rotor_lp, speed_range, frequencies = 7, frequency_type="wn")
 # print("G_hp", G_hp.shape)
-# fct.run_campbell(rotor_hp, speed_range, frequencies = 7, Gyro=rotor_hp.G() * 1.5)
+# fct.run_campbell(rotor_hp, speed_range, frequencies = 7, Gyro=rotor_hp.G() * 1.5, slope_critic_speed=1.5)
 # fct.run_damping_mode(rotor_lp, rotor_hp, speed_range, frequencies=8, frequency_type="wn",Gyro=rotor_hp.G())

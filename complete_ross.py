@@ -96,7 +96,7 @@ def get_mode(rotor, speed, num_modes=12, sparse=True, synchronous=False, Gyro = 
     return {"wn": wn, "wd": wd, "damping_ratio": damping_ratio, "evectors": evectors, "real_part": (np.real(evalues))[:wn_len]}
 
 
-def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd", slope_critic_speed = 1, units="rad/s"):
+def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd", slope_critic_speed = 1, units="rad/s", ):
     matrix = []
     for i, w in enumerate(speed_range):
         modal = get_mode(rotor, w, num_modes=2 * frequencies, sparse=True, synchronous=False, Gyro=Gyro)
@@ -112,31 +112,35 @@ def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd"
     fig = go.Figure()
     # Ajouter les traces pour chaque mode
     for i, wn in enumerate(matrix):
-        slides = (wn[len(wn)-1] - wn[5]) / (speed_range[1] - speed_range[0])
-        marker_symbol = 'triangle-up' if slides > 0 else 'triangle-down'
-        
-        # Ajouter des points pour chaque mode avec des couleurs et symboles appropriés
-        fig.add_trace(go.Scatter(
-        x=speed_range,
-        y=wn,
-        mode='markers',
-        marker=dict(size=10, symbol=marker_symbol, color='#8B0000'),
-        showlegend=False,
-        hoverinfo='skip'  # Désactiver les info-bulles
+        for j in range(1,len(wn)):
+            slides = (wn[j] - wn[j-1]) 
+            if slides > 0:
+                marker_symbol = 'triangle-up'
+            else:
+                 marker_symbol = 'triangle-down'
+            # Ajouter des points pour chaque mode avec des couleurs et symboles appropriés
+            fig.add_trace(go.Scatter(
+            x=np.array(speed_range[j]),
+            y=np.array(wn[j]),
+            mode='markers',
+            marker=dict(size=10, symbol=marker_symbol, color='#8B0000'),
+            showlegend=False,
+            hoverinfo='skip'  # Désactiver les info-bulles
     ))
-    critical_speed = run_critical_speed(rotor, num_modes= frequencies * 2, Gyro=Gyro)
+    critical_speed = run_critical_speed(rotor, num_modes= frequencies * 2, Gyro=Gyro, slope=slope_critic_speed)
     if frequency_type == "wn":
-        crictal_speed = critical_speed["wn"]
+        crictal_speed = critical_speed["wn"][(critical_speed["wn"]) < speed_range[-1]]
     else:
-        crictal_speed = critical_speed["wd"]
+        crictal_speed = critical_speed["wd"][critical_speed["wd"] < speed_range[-1]]
     
     # Ajouter le point de la vitesse critique avec une info-bulle personnalisée
     fig.add_trace(go.Scatter(
         x=crictal_speed,
-        y=[cs * slope_critic_speed for cs in crictal_speed],
+        y=crictal_speed * slope_critic_speed,
         mode='markers',
         marker=dict(symbol="x", color="black", size=10),
         name="Crit. Speed",
+        showlegend=True,
         hovertemplate=f"Frequency ({units}): %{{y:.2f}}<br>Critical Speed ({units}): %{{x:.2f}}"
     ))
 
@@ -153,8 +157,8 @@ def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd"
 
     # Ajouter une ligne verticale pour la vitesse critique sans la montrer dans la légende
     fig.add_shape(type='line',
-        x0=crictal_speed[0],
-        x1=crictal_speed[0],
+        x0=5000/60 * 2 * np.pi,
+        x1=5000/60 * 2 * np.pi,
         y0=0,
         y1=max(matrix.flatten()),
         line=dict(color='black', dash='dash'),
@@ -216,12 +220,12 @@ def run_critical_speed(rotor, slope  = 1 ,num_modes=12, rtol=0.005, Gyro = []):
 
     return {"wn": wn, "wd": wd}
 
-def run_cambell_2_rotor(rotor1, rotor2, speed_range, frequencies=6, frequency_type="wd", Gyro=[]):
+def run_cambell_2_rotor(rotor1, rotor2, speed_range, frequencies=6, frequency_type="wd", Gyro=[], units="rad/s"):
     matrix1 = []
     matrix2 = []
     for i, w in enumerate(speed_range):
-        modal1 = get_mode(rotor1, w, num_modes=frequencies, sparse=True, synchronous=False)
-        modal2 = get_mode(rotor2, w, num_modes=frequencies, sparse=True, synchronous=False, Gyro=Gyro)
+        modal1 = get_mode(rotor1, w, num_modes=frequencies *2, sparse=True, synchronous=False)
+        modal2 = get_mode(rotor2, w, num_modes=frequencies *2, sparse=True, synchronous=False, Gyro=Gyro)
         if frequency_type == "wn":
             wn1 = modal1["wn"][:frequencies]
             wn2 = modal2["wn"][:frequencies]
@@ -239,56 +243,71 @@ def run_cambell_2_rotor(rotor1, rotor2, speed_range, frequencies=6, frequency_ty
 
     # Ajouter les traces pour chaque mode
     for i, (wn1, wn2) in enumerate(zip(matrix1, matrix2)):
-        slides1 = (wn1[len(wn1)-1] - wn1[0]) / (speed_range[1] - speed_range[0])
-        slides2 = (wn2[len(wn2)-1] - wn2[4]) / (speed_range[1] - speed_range[0])
-        marker_symbol1 = 'triangle-up' if slides1 > 0 else 'triangle-down'
-        marker_symbol2 = 'triangle-up' if slides2 > 0 else 'triangle-down'
+        for j in range(1,len(wn1)):
+            slides1 = (wn1[j] - wn1[j-1]) 
+            slides2 = (wn2[j] - wn2[j-1]) 
+            if slides1 > 0:
+                marker_symbol1 = 'triangle-up'
+            else:
+                marker_symbol1 = 'triangle-down'
+            if slides2 > 0:
+                marker_symbol2 = 'triangle-up'
+            else:
+                marker_symbol2 = 'triangle-down'
         
-        # Ajouter des points pour chaque mode avec des couleurs et symboles appropriés
-        fig.add_trace(go.Scatter(
-            x=speed_range,
-            y=wn1,
-            mode='markers',  # Utilisation de 'markers' uniquement
+            # Ajouter des points pour chaque mode avec des couleurs et symboles appropriés
+            fig.add_trace(go.Scatter(
+            x=np.array(speed_range[j]),
+            y=np.array(wn1[j]),
+            mode='markers',
             marker=dict(size=10, symbol=marker_symbol1, color='#8B0000'),
-            name=f'Mode {i+1} - Rotor 1'
+            showlegend=False,
+            hoverinfo='skip'  # Désactiver les info-bulles
         ))
-
-        fig.add_trace(go.Scatter(
-            x=speed_range,
-            y=wn2,
-            mode='markers',  # Utilisation de 'markers' uniquement
-            marker=dict(size=10, symbol=marker_symbol2, color='#00008B'),
-            name=f'Mode {i+1} - Rotor 2'
-        ))
+            fig.add_trace(go.Scatter(
+            x=np.array(speed_range[j]),
+            y=np.array(wn2[j]),
+            mode='markers',
+            marker=dict(size=10, symbol=marker_symbol2, color='#7B68EE'),
+            showlegend=False,
+            hoverinfo='skip'  # Désactiver les info-bulles
+            ))   
         # Ajouter les lignes de référence
-    critical_speed_1 = run_critical_speed(rotor1, num_modes= frequencies + 1)
+    critical_speed_1 = run_critical_speed(rotor1, num_modes= frequencies *2)
     if frequency_type == "wn":
-        crictal_speed_1 = critical_speed_1["wn"]
+        crictal_speed_1 = critical_speed_1["wn"][critical_speed_1["wn"] < speed_range[-1]]
     else:
-        crictal_speed_1 = critical_speed_1["wd"]
+        crictal_speed_1 = critical_speed_1["wd"][critical_speed_1["wd"] < speed_range[-1]]
     fig.add_trace(go.Scatter(
         x = crictal_speed_1,
-        y = crictal_speed_1 * 1,
+        y = crictal_speed_1 ,
         mode='markers',
-        marker=dict(size=10, symbol='circle-x', color='black'),
+        marker=dict(size=10, symbol='x', color='black'),
+        name="Crit. Speed first rotor",
+        showlegend=True,
+        hovertemplate=f"Frequency ({units}): %{{y:.2f}}<br>Critical Speed ({units}): %{{x:.2f}}"
     ))
 
-    critical_speed_2 = run_critical_speed(rotor2, num_modes= frequencies + 1, Gyro=Gyro)
+    critical_speed_2 = run_critical_speed(rotor2, num_modes= frequencies * 2, Gyro=Gyro, slope=1.5)
     if frequency_type == "wn":
-        crictal_speed_2 = critical_speed_2["wn"]
+        crictal_speed_2 = critical_speed_2["wn"][critical_speed_2["wn"] < speed_range[-1]]
     else:
-        crictal_speed_2 = critical_speed_2["wd"]
+        crictal_speed_2 = critical_speed_2["wd"][critical_speed_2["wd"] < speed_range[-1]]
+    
     fig.add_trace(go.Scatter(
         x = crictal_speed_2,
         y = crictal_speed_2 * 1.5,
         mode='markers',
-        marker=dict(size=10, symbol='circle-x', color='black'),
+        marker=dict(size=10, symbol='x', color='black'),
+        name="Crit. Speed second rotor",
+        showlegend=True,
+        hovertemplate=f"Frequency ({units}): %{{y:.2f}}<br>Critical Speed ({units}): %{{x:.2f}}"
     ))
     fig.add_trace(go.Scatter(
         x=speed_range,
         y=speed_range,
         mode='lines',
-        line=dict(color='black', dash='dash'),
+        line=dict(color='blue', dash='dashdot'),
         name='y=x'
     ))
 
@@ -296,7 +315,7 @@ def run_cambell_2_rotor(rotor1, rotor2, speed_range, frequencies=6, frequency_ty
         x=speed_range,
         y=speed_range * 1.5,
         mode='lines',
-        line=dict(color='black', dash='dash'),
+        line=dict(color='green', dash='dashdot'),
         name='y=1.5x'
     ))
 
