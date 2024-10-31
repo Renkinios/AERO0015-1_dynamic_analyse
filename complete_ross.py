@@ -96,7 +96,7 @@ def get_mode(rotor, speed, num_modes=12, sparse=True, synchronous=False, Gyro = 
     return {"wn": wn, "wd": wd, "damping_ratio": damping_ratio, "evectors": evectors, "real_part": (np.real(evalues))[:wn_len]}
 
 
-def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd", slope_critic_speed = 1, units="rad/s", ):
+def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd", slope_critic_speed = 1, units="rad/s", two_shaft = False):
     matrix = []
     for i, w in enumerate(speed_range):
         modal = get_mode(rotor, w, num_modes=2 * frequencies, sparse=True, synchronous=False, Gyro=Gyro)
@@ -143,6 +143,33 @@ def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd"
         showlegend=True,
         hovertemplate=f"Frequency ({units}): %{{y:.2f}}<br>Critical Speed ({units}): %{{x:.2f}}"
     ))
+    if two_shaft :
+
+        critical_speed = run_critical_speed(rotor, num_modes= frequencies * 2, Gyro=Gyro, slope=1.5)
+        if frequency_type == "wn":
+            crictal_speed_2 = critical_speed["wn"][(critical_speed["wn"]) < speed_range[-1]]
+        else:
+            crictal_speed_2 = critical_speed["wd"][critical_speed["wd"] < speed_range[-1]]
+
+        fig.add_trace(go.Scatter(
+            x=crictal_speed_2,
+            y=crictal_speed_2 * 1.5,
+            mode='markers',
+            marker=dict(symbol="x", color="black", size=10),
+            name="Crit. Speed",
+            # showlegend=True,
+            hovertemplate=f"Frequency ({units}): %{{y:.2f}}<br>Critical Speed ({units}): %{{x:.2f}}"
+        ))
+        fig.add_trace(go.Scatter(
+        x=speed_range,
+        y=speed_range * 1.5,
+        mode='lines',
+        line=dict(color="#556B2F", dash='dashdot'),
+        showlegend=True,
+        name="1.5x speed",
+        hoverinfo='skip'  # Désactiver les info-bulles
+    ))
+        
 
     # Créer le nom dynamique pour la ligne de pente critique, sans la montrer dans la légende
     fig.add_trace(go.Scatter(
@@ -154,6 +181,7 @@ def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd"
         name=f"{slope_critic_speed}x speed",
         hoverinfo='skip'  # Désactiver les info-bulles
     ))
+
 
     # Ajouter une ligne verticale pour la vitesse critique sans la montrer dans la légende
     fig.add_shape(type='line',
@@ -179,8 +207,8 @@ def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd"
 
     # Mise en forme du graphique et positionnement de la légende en bas
     fig.update_layout(
-        xaxis_title='Vitesse (rad/s)',
-        yaxis_title='Pulsation Naturelle (rad/s)',
+        xaxis_title='Vitesse [rad/s]',
+        yaxis_title='Pulsation Naturelle [rad/s]',
         template='plotly_white',
         showlegend=True,
         legend=dict(
