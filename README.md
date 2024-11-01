@@ -17,17 +17,20 @@
 - [Teamwork](#Teamwork)
 
 ## Introduction
-This project aim to do a dynamic annalyse of a twin-spool turbo-jet engine, with the construction of a finite elment using the open source rose, create the campbelle diagrame at 0 to 2000 RPM, determined the critical speed of the engine, define s modes at 0 RMP and finally look if the speed of 5000 RPM is possible for the system.
+This project aims to conduct a dynamic analysis of a twin-spool turbojet engine. It includes constructing a finite element model using the open-source software ROS, generating the Campbell diagram from 0 to 2000 RPM, determining the critical speeds of the engine, defining the modes at 0 RPM, and finally assessing whether a speed of 5000 RPM is achievable for the system.
 
-## Reqirements
-Ce projet nécessite les packages listés dans le fichier `requirements.txt`. Pour installer ces dépendances, assurez-vous d'avoir [Python](https://www.python.org/) et [pip](https://pip.pypa.io/en/stable/) installés, puis exécutez la commande suivante :
+
+
+## Requirements
+This project requires the packages listed in the `requirements.txt` file. To install these dependencies, ensure you have [Python](https://www.python.org/) and [pip](https://pip.pypa.io/en/stable/) installed, then run the following command:
 
 ```bash
 pip install -r requirements.txt
 ```
 
 ## Usage
-The code is inspired by the software ross, the function is change in the doc `complete_ross.py`, the main usage, is for run the `main_jupyter.ipynb`, which going to show you all the result you need step by step.
+The code is inspired by the ROS software. The function changes are documented in `complete_ross.py`. The main usage is to run `main_jupyter.ipynb`, which will guide you through all the necessary results step by step.
+
 
 ## Teamwork
 
