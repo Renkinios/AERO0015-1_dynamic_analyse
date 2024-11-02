@@ -96,7 +96,10 @@ def get_mode(rotor, speed, num_modes=12, sparse=True, synchronous=False, Gyro = 
     return {"wn": wn, "wd": wd, "damping_ratio": damping_ratio, "evectors": evectors, "real_part": (np.real(evalues))[:wn_len]}
 
 
-def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd", slope_critic_speed = 1, units="rad/s", two_shaft = False):
+def run_campbell(title, rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd", slope_critic_speed=1, units="RPM", two_shaft=False):
+    # Convertir speed_range de rad/s à RPM
+    speed_range_rpm = speed_range * 60 / (2 * np.pi)
+    
     matrix = []
     for i, w in enumerate(speed_range):
         modal = get_mode(rotor, w, num_modes=2 * frequencies, sparse=True, synchronous=False, Gyro=Gyro)
@@ -112,22 +115,23 @@ def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd"
     fig = go.Figure()
     # Ajouter les traces pour chaque mode
     for i, wn in enumerate(matrix):
-        for j in range(1,len(wn)):
-            slides = (wn[j] - wn[j-1]) 
+        for j in range(1, len(wn)):
+            slides = (wn[j] - wn[j - 1])
             if slides > 0:
                 marker_symbol = 'triangle-up'
             else:
-                 marker_symbol = 'triangle-down'
+                marker_symbol = 'triangle-down'
             # Ajouter des points pour chaque mode avec des couleurs et symboles appropriés
             fig.add_trace(go.Scatter(
-            x=np.array(speed_range[j]),
-            y=np.array(wn[j]),
-            mode='markers',
-            marker=dict(size=10, symbol=marker_symbol, color='#8B0000'),
-            showlegend=False,
-            hoverinfo='skip'  # Désactiver les info-bulles
-    ))
-    critical_speed = run_critical_speed(rotor, num_modes= frequencies * 2, Gyro=Gyro, slope=slope_critic_speed)
+                x=np.array(speed_range_rpm[j]),
+                y=np.array(wn[j]),
+                mode='markers',
+                marker=dict(size=10, symbol=marker_symbol, color='#8B0000'),
+                showlegend=False,
+                hoverinfo='skip'  # Désactiver les info-bulles
+            ))
+    
+    critical_speed = run_critical_speed(rotor, num_modes=frequencies * 2, Gyro=Gyro, slope=slope_critic_speed)
     if frequency_type == "wn":
         crictal_speed = critical_speed["wn"][(critical_speed["wn"]) < speed_range[-1]]
     else:
@@ -135,45 +139,43 @@ def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd"
     
     # Ajouter le point de la vitesse critique avec une info-bulle personnalisée
     fig.add_trace(go.Scatter(
-        x=crictal_speed,
+        x=crictal_speed * 60 / (2 * np.pi),  # Convertir en RPM
         y=crictal_speed * slope_critic_speed,
         mode='markers',
         marker=dict(symbol="x", color="black", size=10),
         name="Crit. Speed",
-        showlegend=True,
+        showlegend=False,
         hovertemplate=f"Frequency ({units}): %{{y:.2f}}<br>Critical Speed ({units}): %{{x:.2f}}"
     ))
-    if two_shaft :
 
-        critical_speed = run_critical_speed(rotor, num_modes= frequencies * 2, Gyro=Gyro, slope=1.5)
+    if two_shaft:
+        critical_speed = run_critical_speed(rotor, num_modes=frequencies * 2, Gyro=Gyro, slope=1.5)
         if frequency_type == "wn":
             crictal_speed_2 = critical_speed["wn"][(critical_speed["wn"]) < speed_range[-1]]
         else:
             crictal_speed_2 = critical_speed["wd"][critical_speed["wd"] < speed_range[-1]]
 
         fig.add_trace(go.Scatter(
-            x=crictal_speed_2,
+            x=crictal_speed_2 * 60 / (2 * np.pi),  # Convertir en RPM
             y=crictal_speed_2 * 1.5,
             mode='markers',
             marker=dict(symbol="x", color="black", size=10),
             name="Crit. Speed",
-            # showlegend=True,
             hovertemplate=f"Frequency ({units}): %{{y:.2f}}<br>Critical Speed ({units}): %{{x:.2f}}"
         ))
         fig.add_trace(go.Scatter(
-        x=speed_range,
-        y=speed_range * 1.5,
-        mode='lines',
-        line=dict(color="#556B2F", dash='dashdot'),
-        showlegend=True,
-        name="1.5x speed",
-        hoverinfo='skip'  # Désactiver les info-bulles
-    ))
-        
-
+            x=speed_range_rpm,
+            y=speed_range * 1.5,
+            mode='lines',
+            line=dict(color="#556B2F", dash='dashdot'),
+            showlegend=True,
+            name="1.5x speed",
+            hoverinfo='skip'  # Désactiver les info-bulles
+        ))
+    
     # Créer le nom dynamique pour la ligne de pente critique, sans la montrer dans la légende
     fig.add_trace(go.Scatter(
-        x=speed_range,
+        x=speed_range_rpm,
         y=speed_range * slope_critic_speed,
         mode='lines',
         line=dict(color='blue', dash='dashdot'),
@@ -182,52 +184,166 @@ def run_campbell(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd"
         hoverinfo='skip'  # Désactiver les info-bulles
     ))
 
-
-    # Ajouter une ligne verticale pour la vitesse critique sans la montrer dans la légende
+    # Ajouter des lignes verticales pour des vitesses spécifiques (en RPM)
     fig.add_shape(type='line',
-        x0=5000/60 * 2 * np.pi,
-        x1=5000/60 * 2 * np.pi,
-        y0=0,
-        y1=max(matrix.flatten()),
-        line=dict(color='black', dash='dash'),
-    )
-    fig.add_trace(go.Scatter(
-    x=[None], y=[None],  # Aucun point affiché
-    mode='markers',
-    marker=dict(size=10, symbol='triangle-up', color='#8B0000'),  # Couleur transparente
-    name='Forward'
-    ))
+                  x0=5000,
+                  x1=5000,
+                  y0=0,
+                  y1=max(matrix.flatten()),
+                  line=dict(color='black', dash='dash'),
+                  )
+    fig.add_shape(type='line',
+                  x0=5500,
+                  x1=5500,
+                  y0=0,
+                  y1=max(matrix.flatten()),
+                  line=dict(color='red', dash='dash'),
+                  )
+    fig.add_shape(type='line',
+                  x0=4500,
+                  x1=4500,
+                  y0=0,
+                  y1=max(matrix.flatten()),
+                  line=dict(color='red', dash='dash'),
+                  )
 
     fig.add_trace(go.Scatter(
-        x=[None], y=[None],  # Aucun point affiché
+        x=[None], y=[None],
         mode='markers',
-        marker=dict(size=10, symbol='triangle-down', color='#8B0000'),  # Couleur transparente
-        name='Backward'
+        marker=dict(size=10, symbol='triangle-up', color='#8B0000'),
+        name='Forward Whirl'
     ))
 
-    # Mise en forme du graphique et positionnement de la légende en bas
+    fig.add_trace(go.Scatter(
+        x=[None], y=[None],
+        mode='markers',
+        marker=dict(size=10, symbol='triangle-down', color='#8B0000'),
+        name='Backward Whirl'
+    ))
+
+    # Mise en forme du graphique et positionnement de la légende en bas    
     fig.update_layout(
-        xaxis_title='Vitesse [rad/s]',
-        yaxis_title='Pulsation Naturelle [rad/s]',
+        xaxis_title='Rotation Speed [RPM]',
+        yaxis_title='Whirl Frequency [rad/s]',
         template='plotly_white',
-        showlegend=True,
+        showlegend=True,  # Hide legend
         legend=dict(
-            orientation="h",  # Légende horizontale
+            orientation="h",
             yanchor="top",
-            y=-0.3,  # Positionnement en bas
+            y=-0.18,
             xanchor="center",
-            x=0.5
+            x=0.5,
+            font=dict(
+                family="Computer Modern",
+                size=20,
+                color = 'black')
         ),
         width=800,
         height=600,
+        font=dict(family="Computer Modern", size=14, color = 'black'),  # Set font to Computer Modern for all text elements
         xaxis=dict(
-            range=[speed_range[0], speed_range[-1]]
+            range=[speed_range_rpm[0], speed_range_rpm[-1]],
+            tickfont=dict(size=20),  # Font size for x-axis ticks
+            title_font=dict(size=20)  # Font size for x-axis title
+        ),
+        yaxis=dict(
+            tickfont=dict(size=20),  # Font size for y-axis ticks
+            title_font=dict(size=20)  # Font size for y-axis title
         )
     )
+
+    # Enregistrer le plot en PDF
+    fig.write_image(title)
 
     # Afficher le plot
     fig.show()
 
+################################################################################
+import plotly.graph_objects as go
+
+def run_campbell_2(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd", output_file="campbell_diagram.pdf"): 
+    matrix = []
+    for i, w in enumerate(speed_range):
+        modal = get_mode(rotor, w, num_modes=2 * frequencies, sparse=True, synchronous=False, Gyro=Gyro)
+        if frequency_type == "wn":
+            wn = modal["wn"][:frequencies]
+        else:
+            wn = modal["wd"][:frequencies]
+        matrix.append(wn)
+    
+    matrix = np.array(matrix).T
+
+    # Convert speed range to RPM (from rad/s to RPM)
+    speed_range_rpm = [w * 60 / (2 * np.pi) for w in speed_range]
+
+    # Initialize the figure
+    fig = go.Figure()
+
+    # Add traces for each mode
+    added_legends = {"Backward Whirl": False, "Forward Whirl": False}
+    for i, wn in enumerate(matrix):
+        for j in range(1, len(wn)):
+            slides = (wn[j] - wn[j-1])
+            if slides > 0:
+                marker_symbol = 'triangle-up'
+                legend_name = "Forward Whirl"
+            else:
+                marker_symbol = 'triangle-down'
+                legend_name = "Backward Whirl"
+            
+            # Add points for each mode with appropriate colors and symbols
+            fig.add_trace(go.Scatter(
+                x=[speed_range_rpm[j]],  # Use RPM for the x-axis
+                y=[wn[j]],
+                mode='markers',
+                marker=dict(size=10, symbol=marker_symbol, color='#8B0000'),
+                showlegend=not added_legends[legend_name],  # Only show legend once per type
+                name=legend_name,
+                hoverinfo='skip'  # Disable tooltips
+            ))
+            added_legends[legend_name] = True  # Mark that legend has been added
+
+    # Configure the layout of the plot with "Computer Modern" font
+    fig.update_layout(
+        xaxis_title='Rotation Speed [RPM]',
+        yaxis_title='Whirl Frequency [rad/s]',
+        template='plotly_white',
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.13,
+            xanchor="center",
+            x=0.5,
+            font=dict(
+                family="Computer Modern",
+                size=29,
+                color = 'black')
+        ),
+        width=800,
+        height=1000,
+        font=dict(family="Computer Modern", size=29, color = 'black'),  # Set font to Computer Modern for all text elements
+        xaxis=dict(
+            range=[speed_range_rpm[0], speed_range_rpm[-1]],
+            tickfont=dict(size=29),  # Font size for x-axis ticks
+            title_font=dict(size=29)  # Font size for x-axis title
+        ),
+        yaxis=dict(
+            tickfont=dict(size=29),  # Font size for y-axis ticks
+            title_font=dict(size=29)  # Font size for y-axis title
+        )
+    )
+
+    # Save the plot as a PDF file
+    fig.write_image(output_file, format="pdf", engine="kaleido")
+
+    # Optionally, show the plot
+    fig.show()
+
+
+
+
+
+################################################################################
 
 
 
@@ -467,3 +583,5 @@ def run_damping_mode(rotor1, rotor2, speed_range, frequencies=6, frequency_type=
 
     # Afficher le plot
     pio.show(fig)
+
+
