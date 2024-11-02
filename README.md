@@ -20,7 +20,7 @@
 This project aim to do a dynamic annalyse of a twin-spool turbo-jet engine, with the construction of a finite elment using the open source rose, create the campbelle diagrame at 0 to 2000 RPM, determined the critical speed of the engine, define s modes at 0 RMP and finally look if the speed of 5000 RPM is possible for the system.
 
 ## Reqirements
-Ce projet nécessite les packages listés dans le fichier `requirements.txt`. Pour installer ces dépendances, assurez-vous d'avoir [Python](https://www.python.org/) et [pip](https://pip.pypa.io/en/stable/) installés, puis exécutez la commande suivante :
+This project requires the packages listed in the `requirements.txt` file. To install these dependencies, ensure you have [Python](https://www.python.org/) and [pip](https://pip.pypa.io/en/stable/) installed, then run the following command:
 
 ```bash
 pip install -r requirements.txt
