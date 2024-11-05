@@ -425,30 +425,32 @@ def run_cambell_rotor_without_critical(rotor1, rotor2, speed_range, frequencies=
     # Afficher le plot
     pio.show(fig)
     
-def get_safe_speeds(critical_speeds, min_speed, max_speed):
-    exclusion_ranges = []
-    
-    # Définir les plages à exclure pour chaque vitesse critique
-    for speed in critical_speeds:
-        lower_bound_75 = 0.75 * speed
-        upper_bound_110 = 1.1 * speed
-        exclusion_ranges.append((lower_bound_75, upper_bound_110))
-    
-    # Créer un tableau de vitesses dans l'intervalle [min_speed, max_speed]
+def get_safe_nominal_speeds(critical_speeds, min_speed, max_speed):
+    # Générer les vitesses potentielles dans l'intervalle [min_speed, max_speed]
     all_speeds = np.linspace(min_speed, max_speed, num=1000)
-    safe_speeds = []
+    # print(all_speeds)
+    safe_nominal_speeds = []
     
-    # Vérifier si chaque vitesse est dans une plage d'exclusion
-    for speed in all_speeds:
+    # Vérifier chaque vitesse nominale potentielle
+    for nominal_speed in all_speeds:
         is_safe = True
-        for lower, upper in exclusion_ranges:
-            if lower <= speed <= upper or np.isclose(speed, 0.5 * np.array(critical_speeds)).any():
-                is_safe = False
-                break
+        
+        # Calculer 50%, 75%, et 110% de la vitesse nominale
+        lower_bound_50 = 0.5 * nominal_speed
+        lower_bound_75 = 0.75 * nominal_speed
+        upper_bound_110 = 1.1 * nominal_speed
+        
+        # Vérifier qu'aucune vitesse critique ne tombe dans ces plages
+        if any(np.isclose(critical_speed, lower_bound_50, atol=0.01) or 
+               (lower_bound_75 <= critical_speed <= upper_bound_110) 
+               for critical_speed in critical_speeds):
+            is_safe = False
+        
+        # Si la vitesse est sûre, l'ajouter à la liste
         if is_safe:
-            safe_speeds.append(speed)
+            safe_nominal_speeds.append(nominal_speed)
     
-    return safe_speeds
+    return safe_nominal_speeds
 
 
 

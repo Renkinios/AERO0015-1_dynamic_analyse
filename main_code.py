@@ -99,12 +99,24 @@ speed_range = np.linspace(0, max_spin, samples)
 # print("G_hp", G_hp.shape)
 # fct.run_campbell(rotor_hp, speed_range, frequencies = 7, Gyro=rotor_hp.G() * 1.5, slope_critic_speed=1.5)
 # fct.run_damping_mode(rotor_lp, rotor_hp, speed_range, frequencies=8, frequency_type="wn",Gyro=rotor_hp.G())
-# critical_speeds_1 = fct.run_critical_speed(rotor_coaxial, num_modes=  14, Gyro=G, slope=1)
 
-# critical_speeds_2 = fct.run_critical_speed(rotor_coaxial, num_modes=  20, Gyro=G, slope=1.5)
+critical_speeds_1 = fct.run_critical_speed(rotor_coaxial, num_modes=  14, Gyro=G, slope=1)["wd"]
+critical_speeds_2 = fct.run_critical_speed(rotor_coaxial, num_modes=  20, Gyro=G, slope=1.5)["wd"]
+
+# critical_forward = np.array([
+#     critical_speeds_2[1] * 0.9, critical_speeds_2[1] * 1.1,
+#     critical_speeds_1[1] * 0.9, critical_speeds_1[1] * 1.1,
+#     critical_speeds_2[4] * 0.9, critical_speeds_2[4] * 1.1,
+#     critical_speeds_2[5] * 0.9, critical_speeds_2[5] * 1.1,
+#     critical_speeds_1[4] * 0.9, critical_speeds_1[4] * 1.1,
+#     critical_speeds_1[5] * 0.9, critical_speeds_1[5] * 1.1
+# ])
+critical_forward = np.array([critical_speeds_2[1],critical_speeds_1[1], critical_speeds_2[4],critical_speeds_2[5],critical_speeds_1[4], critical_speeds_1[5]])
 # critical_speed = np.concatenate((critical_speeds_1["wn"], critical_speeds_2["wn"])) * 60 / (2 * np.pi) # convert to TPM
-# RPM_nom =  fct.get_safe_speeds(critical_speed, 2000, 20000)
+RPM_nom = fct.get_safe_nominal_speeds((critical_forward)* 60 / (2 * np.pi), 0,5200 )
+print(min(RPM_nom), max(RPM_nom))
+# print(RPM_nom)
 # print("RPM_nom", RPM_nom)
-# fct.run_campbell("rotor.pdf", rotor_coaxial, speed_range, frequencies=5, frequency_type="wd", Gyro=G,  nominal =0, two_shaft = False)
+fct.run_campbell("rotor.pdf", rotor_coaxial, speed_range, frequencies=5, frequency_type="wd", Gyro=G,  nominal =RPM_nom[0], two_shaft = True)
 # mode = fct.get_mode(rotor_coaxial,1000,num_modes=28)
 # rotor_coaxial.run_campbell
