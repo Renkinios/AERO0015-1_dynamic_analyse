@@ -47,7 +47,4 @@ Felix Weis :
 - Report : Critical Speed
 - Code : Help for Campbell Diagram plotting
 
-Younes Ghafour : 
-- 
-
 
