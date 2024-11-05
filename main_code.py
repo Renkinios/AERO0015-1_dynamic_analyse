@@ -94,8 +94,17 @@ speed_range = np.linspace(0, max_spin, samples)
 # print("wd = ",run_critical_speed["wd"])
 # print("wn = ",run_critical_speed["wn"])
 
-fct.run_cambell_2_rotor(rotor_lp, rotor_hp, speed_range, frequencies=6, frequency_type="wn", Gyro=G_hp)
+
 # fct.run_campbell(rotor_lp, speed_range, frequencies = 7, frequency_type="wn")
 # print("G_hp", G_hp.shape)
 # fct.run_campbell(rotor_hp, speed_range, frequencies = 7, Gyro=rotor_hp.G() * 1.5, slope_critic_speed=1.5)
 # fct.run_damping_mode(rotor_lp, rotor_hp, speed_range, frequencies=8, frequency_type="wn",Gyro=rotor_hp.G())
+# critical_speeds_1 = fct.run_critical_speed(rotor_coaxial, num_modes=  14, Gyro=G, slope=1)
+
+# critical_speeds_2 = fct.run_critical_speed(rotor_coaxial, num_modes=  20, Gyro=G, slope=1.5)
+# critical_speed = np.concatenate((critical_speeds_1["wn"], critical_speeds_2["wn"])) * 60 / (2 * np.pi) # convert to TPM
+# RPM_nom =  fct.get_safe_speeds(critical_speed, 2000, 20000)
+# print("RPM_nom", RPM_nom)
+# fct.run_campbell("rotor.pdf", rotor_coaxial, speed_range, frequencies=5, frequency_type="wd", Gyro=G,  nominal =0, two_shaft = False)
+# mode = fct.get_mode(rotor_coaxial,1000,num_modes=28)
+# rotor_coaxial.run_campbell
