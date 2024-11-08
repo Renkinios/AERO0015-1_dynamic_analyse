@@ -53,10 +53,10 @@ def _eigen(
             if sparse is not None:
                 idx = np.where((np.imag(evalues) != 0) & (np.abs(evalues) > 0.1))[0]
                 evalues, evectors = filter_eigenpairs(evalues, evectors, idx)
+
         if sorted_:
             idx = rotor._index(evalues)
             evalues, evectors = filter_eigenpairs(evalues, evectors, idx)
-
 
         return evalues, evectors
 
@@ -94,7 +94,9 @@ def get_mode(rotor, speed, num_modes=12, sparse=True, synchronous=False, Gyro = 
     damping_ratio = (-np.real(evalues) / np.absolute(evalues))[:wn_len]
     
     return {"wn": wn, "wd": wd, "damping_ratio": damping_ratio, "evectors": evectors, "real_part": (np.real(evalues))[:wn_len]}
-def run_campbell(title, rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd", slope_critic_speed=1, units="RPM", two_shaft=False, nominal = 0):
+  
+    
+def run_campbell(title, rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd", slope_critic_speed=1, units="RPM", two_shaft=False): 
     # Convertir speed_range de rad/s à RPM
     speed_range_rpm = speed_range * 60 / (2 * np.pi)
     
@@ -128,7 +130,6 @@ def run_campbell(title, rotor, speed_range, frequencies=6, Gyro=[], frequency_ty
                 showlegend=False,
                 hoverinfo='skip'  # Désactiver les info-bulles
             ))
-
     
     critical_speed = run_critical_speed(rotor, num_modes=frequencies * 2, Gyro=Gyro, slope=slope_critic_speed)
     if frequency_type == "wn":
@@ -147,6 +148,28 @@ def run_campbell(title, rotor, speed_range, frequencies=6, Gyro=[], frequency_ty
         hovertemplate=f"Frequency ({units}): %{{y:.2f}}<br>Critical Speed ({units}): %{{x:.2f}}"
     ))
 
+    # Ajouter des zones hachurées autour des vitesses critiques
+    fig.add_shape(
+            type="rect",
+            x0=1.1*5000,
+            x1=0.75*5000,
+            y0=0,
+            y1=max(matrix.flatten()),
+            fillcolor="green",
+            opacity=0.2,
+            line_width=0
+        )
+    fig.add_shape(
+            type="rect",
+            x0=2450,
+            x1=2550,
+            y0=0,
+            y1=max(matrix.flatten()),
+            fillcolor="green",
+            opacity=0.2,
+            line_width=0
+        )
+
     if two_shaft:
         critical_speed = run_critical_speed(rotor, num_modes=frequencies * 2, Gyro=Gyro, slope=1.5)
         if frequency_type == "wn":
@@ -160,7 +183,7 @@ def run_campbell(title, rotor, speed_range, frequencies=6, Gyro=[], frequency_ty
             mode='markers',
             marker=dict(symbol="x", color="black", size=10),
             name="Crit. Speed",
-            hovertemplate="Frequency (Hz): %{{y:.2f}}<br>Critical Speed (RPM}): %{{x:.2f}}"
+            hovertemplate=f"Frequency ({units}): %{{y:.2f}}<br>Critical Speed ({units}): %{{x:.2f}}"
         ))
         fig.add_trace(go.Scatter(
             x=speed_range_rpm,
@@ -191,20 +214,6 @@ def run_campbell(title, rotor, speed_range, frequencies=6, Gyro=[], frequency_ty
                   y1=max(matrix.flatten()),
                   line=dict(color='black', dash='dash'),
                   )
-    fig.add_shape(type='line',
-                  x0=5500,
-                  x1=5500,
-                  y0=0,
-                  y1=max(matrix.flatten()),
-                  line=dict(color='red', dash='dash'),
-                  )
-    fig.add_shape(type='line',
-                  x0=4500,
-                  x1=4500,
-                  y0=0,
-                  y1=max(matrix.flatten()),
-                  line=dict(color='red', dash='dash'),
-                  )
 
     fig.add_trace(go.Scatter(
         x=[None], y=[None],
@@ -219,34 +228,6 @@ def run_campbell(title, rotor, speed_range, frequencies=6, Gyro=[], frequency_ty
         marker=dict(size=10, symbol='triangle-down', color='#8B0000'),
         name='Backward Whirl'
     ))
-
-    if nominal != 0:
-        fig.add_trace(go.Scatter(
-        x=[nominal, nominal],
-        y=[0, max(matrix.flatten())],
-        mode="lines",
-        line=dict(color="darkgreen", width=3),
-        name="Nominal"
-        ))
-
-        # Ajouter une zone en vert plus clair (50% - 75% de la vitesse nominale)
-        fig.add_shape(
-            type="rect",
-            x0=0.75 * nominal,
-            x1=1.10 * nominal,
-            y0=0,
-            y1=max(matrix.flatten()),
-            fillcolor='rgba(144, 238, 144, 0.5)',
-            opacity=0.2,
-            line_width=0
-        )
-        # fig.add_trace(go.Scatter(
-        # x=[nominal*0.5, nominal*0.5],
-        # y=[0, max(matrix.flatten())],
-        # mode="lines",
-        # line=dict(color="rgba(144, 238, 144, 0.5)", width=3),
-        # name="Nominal"
-        # ))
 
     # Mise en forme du graphique et positionnement de la légende en bas    
     fig.update_layout(
@@ -263,11 +244,11 @@ def run_campbell(title, rotor, speed_range, frequencies=6, Gyro=[], frequency_ty
             font=dict(
                 family="Computer Modern",
                 size=20,
-                color = 'black')
+                color='black')
         ),
         width=800,
         height=600,
-        font=dict(family="Computer Modern", size=14, color = 'black'),  # Set font to Computer Modern for all text elements
+        font=dict(family="Computer Modern", size=14, color='black'),  # Set font to Computer Modern for all text elements
         xaxis=dict(
             range=[speed_range_rpm[0], speed_range_rpm[-1]],
             tickfont=dict(size=20),  # Font size for x-axis ticks
@@ -279,14 +260,96 @@ def run_campbell(title, rotor, speed_range, frequencies=6, Gyro=[], frequency_ty
         )
     )
 
-
-
     # Enregistrer le plot en PDF
     fig.write_image(title)
 
     # Afficher le plot
     fig.show()
 
+
+################################################################################
+import plotly.graph_objects as go
+
+def run_campbell_2(rotor, speed_range, frequencies=6, Gyro=[], frequency_type="wd", output_file="campbell_diagram.pdf"): 
+    matrix = []
+    for i, w in enumerate(speed_range):
+        modal = get_mode(rotor, w, num_modes=2 * frequencies, sparse=True, synchronous=False, Gyro=Gyro)
+        if frequency_type == "wn":
+            wn = modal["wn"][:frequencies]
+        else:
+            wn = modal["wd"][:frequencies]
+        matrix.append(wn)
+    
+    matrix = np.array(matrix).T
+
+    # Convert speed range to RPM (from rad/s to RPM)
+    speed_range_rpm = [w * 60 / (2 * np.pi) for w in speed_range]
+
+    # Initialize the figure
+    fig = go.Figure()
+
+    # Add traces for each mode
+    added_legends = {"Backward Whirl": False, "Forward Whirl": False}
+    for i, wn in enumerate(matrix):
+        for j in range(1, len(wn)):
+            slides = (wn[j] - wn[j-1])
+            if slides > 0:
+                marker_symbol = 'triangle-up'
+                legend_name = "Forward Whirl"
+            else:
+                marker_symbol = 'triangle-down'
+                legend_name = "Backward Whirl"
+            
+            # Add points for each mode with appropriate colors and symbols
+            fig.add_trace(go.Scatter(
+                x=[speed_range_rpm[j]],  # Use RPM for the x-axis
+                y=[wn[j]],
+                mode='markers',
+                marker=dict(size=10, symbol=marker_symbol, color='#8B0000'),
+                showlegend=not added_legends[legend_name],  # Only show legend once per type
+                name=legend_name,
+                hoverinfo='skip'  # Disable tooltips
+            ))
+            added_legends[legend_name] = True  # Mark that legend has been added
+
+    # Configure the layout of the plot with "Computer Modern" font
+    fig.update_layout(
+        xaxis_title='Rotation Speed [RPM]',
+        yaxis_title='Whirl Frequency [rad/s]',
+        template='plotly_white',
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.13,
+            xanchor="center",
+            x=0.5,
+            font=dict(
+                family="Computer Modern",
+                size=29,
+                color = 'black')
+        ),
+        width=800,
+        height=1000,
+        font=dict(family="Computer Modern", size=29, color = 'black'),  # Set font to Computer Modern for all text elements
+        xaxis=dict(
+            range=[speed_range_rpm[0], speed_range_rpm[-1]],
+            tickfont=dict(size=29),  # Font size for x-axis ticks
+            title_font=dict(size=29)  # Font size for x-axis title
+        ),
+        yaxis=dict(
+            tickfont=dict(size=29),  # Font size for y-axis ticks
+            title_font=dict(size=29)  # Font size for y-axis title
+        )
+    )
+
+    # Save the plot as a PDF file
+    fig.write_image(output_file, format="pdf", engine="kaleido")
+
+    # Optionally, show the plot
+    fig.show()
+
+
+################################################################################
 
 def run_critical_speed(rotor, slope  = 1 ,num_modes=12, rtol=0.005, Gyro = []):
     modal = get_mode(rotor, 0, num_modes = num_modes, Gyro = Gyro)
@@ -305,7 +368,7 @@ def run_critical_speed(rotor, slope  = 1 ,num_modes=12, rtol=0.005, Gyro = []):
 
     return {"wn": wn, "wd": wd}
 
-def run_cambell_rotor_without_critical(rotor1, rotor2, speed_range, frequencies=6, frequency_type="wd", Gyro=[], units="rad/s"):
+def run_cambell_2_rotor(rotor1, rotor2, speed_range, frequencies=6, frequency_type="wd", Gyro=[], units="rad/s"):
     matrix1 = []
     matrix2 = []
     for i, w in enumerate(speed_range):
@@ -424,33 +487,6 @@ def run_cambell_rotor_without_critical(rotor1, rotor2, speed_range, frequencies=
 
     # Afficher le plot
     pio.show(fig)
-    
-def get_safe_nominal_speeds(critical_speeds, min_speed, max_speed):
-    # Générer les vitesses potentielles dans l'intervalle [min_speed, max_speed]
-    all_speeds = np.linspace(min_speed, max_speed, num=1000)
-    # print(all_speeds)
-    safe_nominal_speeds = []
-    
-    # Vérifier chaque vitesse nominale potentielle
-    for nominal_speed in all_speeds:
-        is_safe = True
-        
-        # Calculer 50%, 75%, et 110% de la vitesse nominale
-        lower_bound_50 = 0.5 * nominal_speed
-        lower_bound_75 = 0.75 * nominal_speed
-        upper_bound_110 = 1.1 * nominal_speed
-        
-        # Vérifier qu'aucune vitesse critique ne tombe dans ces plages
-        if any(np.isclose(critical_speed, lower_bound_50, atol=0.01) or 
-               (lower_bound_75 <= critical_speed <= upper_bound_110) 
-               for critical_speed in critical_speeds):
-            is_safe = False
-        
-        # Si la vitesse est sûre, l'ajouter à la liste
-        if is_safe:
-            safe_nominal_speeds.append(nominal_speed)
-    
-    return safe_nominal_speeds
 
 
 

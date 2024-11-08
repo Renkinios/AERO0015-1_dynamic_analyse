@@ -6,8 +6,8 @@
 
 ### Author :
 - Victor Renkin s2306326
-- Felix Weis    
-- Younes Ghafour
+- Felix Weis S201629
+- Rayane Ghalem S205303
 
 ## Table of Contents
 
@@ -47,4 +47,9 @@ Felix Weis :
 - Report : Critical Speed
 - Code : Help for Campbell Diagram plotting
 
+Rayane Ghalem : 
+- Report : Design Recommendations
+- Report : Bearing Stiffness Diagram
+- Code : Ploting ploting the bearing stiffness diagram
+- Code : Determining a suitable stiffness
 
